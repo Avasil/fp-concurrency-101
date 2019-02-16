@@ -1,10 +1,10 @@
 import monix.catnap.ConcurrentQueue
 import monix.eval.Task
-import shared.models.{ComMessage, GameState}
+import shared.models.{GameState, MovementCommand}
 
 package object tanks {
 
-  type InputQueue = ConcurrentQueue[Task, ComMessage]
+  type InputQueue = ConcurrentQueue[Task, MovementCommand]
 
   type OutputQueue = ConcurrentQueue[Task, GameState]
 }

@@ -1,13 +1,15 @@
 package shared.models
 
 sealed trait GameObject {
-  def position: (Double, Double)
+  def position: (Int, Int)
 }
 
-sealed trait MovingObject extends GameObject {
+sealed trait EnvObject extends GameObject
+
+sealed trait AnimatedObject extends GameObject {
   def direction: Direction
 
-  def id: Int
+  def prevPosition: (Int, Int)
 }
 
 sealed trait Direction
@@ -27,25 +29,45 @@ object Direction {
 sealed trait Team
 
 object Team {
+
   case object Green extends Team
+
   case object Yellow extends Team
+
   case object Silver extends Team
+
   case object Purple extends Team
+
 }
 
 object GameObject {
-  final case class Tank(id: Int, team: Team, position: (Double, Double), direction: Direction) extends MovingObject
 
-  // if bullet hits tank there is a small explosion
-  final case class Bullet(id: Int, position: (Double, Double), direction: Direction) extends MovingObject
+  def movementCoords(fromX: Int, fromY: Int, destX: Int, destY: Int, stepSize: Int = 2): List[(Int, Int)] = {
+    def step(from: Int, to: Int): Int =
+      if (from > to) -stepSize
+      else stepSize
 
-  final case class Water(position: (Double, Double)) extends GameObject
+    val coords: Seq[(Int, Int)] =
+      for {
+        x <- fromX to (destX, step(fromX, destX))
+        y <- fromY to (destY, step(fromY, destY))
+      } yield (x, y)
 
-  final case class Ground(position: (Double, Double)) extends GameObject
+    coords.toList
+  }
 
-  final case class Grass(position: (Double, Double)) extends GameObject
+  final case class Tank(id: Int, team: Team, position: (Int, Int), prevPosition: (Int, Int), direction: Direction)
+      extends AnimatedObject
 
-  final case class BrickWall(health: Int, position: (Double, Double)) extends GameObject
+  final case class Bullet(id: Int, position: (Int, Int), prevPosition: (Int, Int), direction: Direction)
+      extends AnimatedObject
 
-  final case class SteelWall(health: Int, position: (Double, Double)) extends GameObject
+  final case class Water(position: (Int, Int)) extends EnvObject
+
+  final case class Grass(position: (Int, Int)) extends EnvObject
+
+  final case class BrickWall(position: (Int, Int), hitDirection: Option[Direction], hp: Int = 2) extends EnvObject
+
+  final case class SteelWall(position: (Int, Int)) extends EnvObject
+
 }

@@ -1,3 +1,3 @@
 package tanks.assets
 
-final case class ResourceLocation(offsetX: Double, offsetY: Double, width: Double, height: Double)
+final case class ResourceLocation(offsetX: Int, offsetY: Int, width: Int, height: Int)

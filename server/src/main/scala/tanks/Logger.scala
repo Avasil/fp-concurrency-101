@@ -15,6 +15,7 @@ object Logger {
 }
 
 object TracedLogger {
+  // TODO: fix
   def create: Task[TracedLogger] = TaskLocal[Option[String]](None).map { taskLocal =>
     new TracedLogger {
       override def setTraceId(id: Option[String]): Task[Unit] =

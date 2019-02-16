@@ -1,48 +1,55 @@
 package tanks.assets
 
 import shared.models.GameObject._
-import shared.models.{Direction, GameObject, MovingObject, Team}
+import shared.models.{AnimatedObject, Direction, GameObject}
+import tanks.assets.impl._
 
 trait Asset[A] {
-  def resourceLocation: ResourceLocation
+  def resourceLocation(a: A): ResourceLocation
 }
 
-trait MovingAsset[A] extends Asset[A] {
-  def dynamicOffset: Stream[Double]
+trait AnimatedAsset[A] extends Asset[A] {
+  def dynamicOffset(a: A): Stream[ResourceLocation]
 }
 
 object Asset {
 
-  val width = 16.0
-  val height = 16.0
+  implicit val explosionAsset: AnimatedAsset[Explosion.type] = ExplosionAsset
 
-  implicit def tankAsset(tank: Tank): MovingAsset[Tank] = new MovingAsset[Tank] {
-    private val offsetX = tank.direction match {
-      case Direction.UP => 0.0
-      case Direction.DOWN => 64.0
-      case Direction.LEFT => 32.0
-      case Direction.RIGHT => 96.0
+  implicit val tankAsset: AnimatedAsset[Tank] = TankAsset
+
+  implicit val bulletAsset: AnimatedAsset[Bullet] = BulletAsset
+
+  implicit val waterAsset: AnimatedAsset[Water] = WaterAsset
+
+  implicit val movingObjectAsset: AnimatedAsset[AnimatedObject] = new AnimatedAsset[AnimatedObject] {
+    override def dynamicOffset(a: AnimatedObject): Stream[ResourceLocation] = a match {
+      case t: Tank => tankAsset.dynamicOffset(t)
+      case b: Bullet => bulletAsset.dynamicOffset(b)
     }
 
-    private val offsetY: Double = tank.team match {
-      case Team.Green | Team.Purple => 128.0
-      case Team.Yellow | Team.Silver => 0.0
+    override def resourceLocation(a: AnimatedObject): ResourceLocation = a match {
+      case t: Tank => tankAsset.resourceLocation(t)
+      case b: Bullet => bulletAsset.resourceLocation(b)
     }
-
-    override def dynamicOffset: Stream[Double] =
-      Stream(offsetX, offsetX + 16.0) ++ dynamicOffset
-
-    override def resourceLocation: ResourceLocation = ResourceLocation(offsetX, offsetY, width, height)
   }
 
-  implicit def gameObjectAsset(gobj: GameObject): Asset[GameObject] = new Asset[GameObject] {
-    override def resourceLocation: ResourceLocation = gobj match {
-      case t: Tank => tankAsset(t).resourceLocation
-      case Water(position) => ResourceLocation(16 * 16, 3 * 16.0, width, height)
-      case Ground(position) => ResourceLocation(22 * 16, 0.0, width, height)
-      case Grass(position) => ResourceLocation(16 * 16, 4 * 16.0, width, height)
-      case BrickWall(health, position) => ResourceLocation(256.0, 0.0, width, height)
-      case SteelWall(health, position) => ResourceLocation(256.0, 16.0, width, height)
-    }
+  implicit val gameObjectAsset: Asset[GameObject] = {
+    case o: AnimatedObject => movingObjectAsset.resourceLocation(o)
+    case o: Water => waterAsset.resourceLocation(o)
+    case Grass(_) => ResourceLocation(256, 64, standardWidth, standardHeight)
+    case b: BrickWall => brickLocation(b)
+    case SteelWall(_) => ResourceLocation(256, 16, standardWidth, standardHeight)
+  }
+
+  private def brickLocation(brickWall: BrickWall): ResourceLocation = {
+    val offsetX =
+      brickWall.hitDirection.fold(256) {
+        case Direction.UP => 288
+        case Direction.DOWN => 320
+        case Direction.LEFT => 272
+        case Direction.RIGHT => 304
+      }
+    ResourceLocation(offsetX, 0, standardWidth, standardHeight)
   }
 }

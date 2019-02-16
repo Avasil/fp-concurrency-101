@@ -38,8 +38,7 @@ lazy val server = (project in file("server"))
       "org.http4s" %% "http4s-circe" % http4sVersion,
       "org.http4s" %% "http4s-dsl" % http4sVersion,
 
-    ),
-    fork := true
+    )
   ).dependsOn(sharedJVM)
 
 lazy val client = (project in file("client"))
@@ -49,6 +48,7 @@ lazy val client = (project in file("client"))
     name := "tanks-client",
     scalaJSUseMainModuleInitializer := true,
     scalaJSUseMainModuleInitializer in Test := false,
+    scalaJSLinkerConfig ~= { _.withBatchMode(true) },
     libraryDependencies ++= Seq(
       "io.monix" %%% "monix" % monixVersion,
       "org.scala-js" %%% "scalajs-dom" % "0.9.6",

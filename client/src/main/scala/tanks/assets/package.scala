@@ -2,10 +2,13 @@ package tanks
 
 package object assets {
   implicit class AssetSyntax[A](a: A)(implicit A: Asset[A]) {
-    def position: ResourceLocation = A.resourceLocation
+    def resourceLocation: ResourceLocation = A.resourceLocation(a)
   }
 
-  implicit class MovingAssetSyntax[A](a: A)(implicit A: MovingAsset[A]) extends AssetSyntax[A](a) {
-    def getAnimatedOffsetX(): Double = A.dynamicOffset()
+  implicit class MovingAssetSyntax[A](a: A)(implicit A: AnimatedAsset[A]) {
+    def getAnimatedOffsetX: Stream[ResourceLocation] = A.dynamicOffset(a)
   }
+
+  val standardWidth = 16
+  val standardHeight = 16
 }

@@ -3,9 +3,10 @@ package tanks
 import cats.effect.ExitCode
 import monix.catnap.ConcurrentQueue
 import monix.eval.{Task, TaskApp}
-import monix.reactive.Observable
-import shared.models.{ComMessage, GameState}
+import monix.reactive.Consumer
+import shared.models.{GameState, MovementCommand}
 import tanks.communication.WebSocket
+import tanks.game.GameLoop
 
 // TODO: make sure to send terminate msg in bracket in case the server dies
 object ServerApp extends TaskApp {
@@ -13,22 +14,21 @@ object ServerApp extends TaskApp {
   override def options: Task.Options =
     Task.defaultOptions.enableLocalContextPropagation
 
-  override def run(args: List[String]): Task[ExitCode] =
+  override def run(args: List[String]): Task[ExitCode] = {
+    val logger = Logger.create
     for {
-      _ <- Task(println("Hello server"))
-      logger <- TracedLogger.create
-      clientInputs <- ConcurrentQueue.unbounded[Task, ComMessage]()
-      updatedStates <- ConcurrentQueue.bounded[Task, GameState](2)
-      _ <- updatedStates.offer(GameState.mapOne)
+      _ <- logger.log("Hello server")
+      clientInputs <- ConcurrentQueue.unbounded[Task, MovementCommand]()
+      updatedStates <- ConcurrentQueue.unbounded[Task, GameState]()
+      // TODO: work on communication, start with preset map and then just send updates
       ws = new WebSocket(clientInputs, updatedStates, logger)(scheduler)
-      _ <- gameLoop(clientInputs, updatedStates, logger).start
+      _ <- updatedStates.offer(GameState.mapOne)
+      _ <- GameLoop
+        .start(clientInputs)
+        .gameState()
+        .consumeWith(Consumer.foreachEval(updatedStates.offer))
+        .start
       _ <- ws.stream.compile.drain
     } yield ExitCode.Success
-
-  def gameLoop(playerInputs: InputQueue, updatedStates: OutputQueue, logger: Logger): Task[Unit] = {
-    Observable
-      .repeatEvalF(playerInputs.poll)
-      .mapEval(_ => updatedStates.offer(GameState.mapOne))
-      .completedL
   }
 }
