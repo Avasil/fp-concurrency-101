@@ -3,6 +3,7 @@ package tanks
 package communication
 
 import cats.effect._
+import cats.effect.concurrent.Deferred
 import fs2._
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -13,17 +14,20 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.websocket._
 import org.http4s.websocket.WebSocketFrame
 import org.http4s.websocket.WebSocketFrame._
-import shared.models.{CommMesage, GameState, MovementCommand, WelcomeMessage}
+import shared.models.{CommMesage, MovementCommand, WelcomeMessage}
 
-final class WebSocket(clientInputs: InputQueue, sendQueue: OutputQueue, logger: Logger)(implicit s: Scheduler)
+final class WebSocket(
+  clientInputs: PlayersMovesQueue,
+  gameStateQueue: GameStateQueue,
+  gameStarted: Deferred[Task, Unit],
+  logger: Logger)(implicit s: Scheduler)
     extends Http4sDsl[Task] {
 
   private def routes: HttpRoutes[Task] = HttpRoutes.of[Task] {
     case GET -> Root / "ws" =>
-      // TODO: to co dostaje wrzucam na jedno, ale odsylac powinienem indywidualnie (mogą być różne gry)
       val toClient: Stream[Task, WebSocketFrame] =
         Stream
-          .repeatEval(sendQueue.poll)
+          .repeatEval(gameStateQueue.poll)
           .map(s => Text(s.encode.toString()))
 
       val fromClient: Pipe[Task, WebSocketFrame, Unit] = _.evalMap {
@@ -36,14 +40,14 @@ final class WebSocket(clientInputs: InputQueue, sendQueue: OutputQueue, logger: 
                 for {
                   _ <- logger.log(s"Received msg $msg")
                   _ <- msg match {
-                    case WelcomeMessage(_) => sendQueue.offer(GameState.mapOne)
+                    case WelcomeMessage(_) => gameStarted.complete(()).attempt
                     case m: MovementCommand => clientInputs.offer(m)
                   }
                 } yield ()
               }
             )
         case f =>
-          logger.log(s"Unknown type: $f")
+          logger.log(s"Unknown message: $f")
       }
 
       WebSocketBuilder[Task].build(toClient, fromClient)

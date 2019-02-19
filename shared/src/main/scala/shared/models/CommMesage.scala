@@ -26,6 +26,21 @@ object Movement {
   case object Right extends Movement
 
   case object Left extends Movement
+
+  def fromDirection(direction: Direction): Movement = direction match {
+    case Direction.UP => Up
+    case Direction.DOWN => Down
+    case Direction.LEFT => Left
+    case Direction.RIGHT => Right
+  }
+
+  def fromNumber(n: Int): Movement = n match {
+    case 0 => Up
+    case 1 => Down
+    case 2 => Right
+    case 3 => Left
+    case _ => Fire
+  }
 }
 
 object CommMesage {

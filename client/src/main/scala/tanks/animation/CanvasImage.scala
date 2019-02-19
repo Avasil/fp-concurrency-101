@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 
 final class CanvasImage(ctx: Ctx2D, backgroundContext: Ctx2D, image: HTMLImageElement, bgImage: HTMLImageElement) {
 
-  def drawBackground(pos: ResourceLocation): Task[Unit] = Task {
+  def drawBackground(): Task[Unit] = Task {
     backgroundContext.fillRect(0, 0, 320, 320)
   }
 
@@ -46,17 +46,21 @@ final class CanvasImage(ctx: Ctx2D, backgroundContext: Ctx2D, image: HTMLImageEl
     forms: Int,
     posX: Double,
     posY: Double,
-    interval: FiniteDuration): Task[Unit] = {
+    interval: FiniteDuration
+  ): Task[Unit] = {
     asset.getAnimatedOffsetX.take(forms).toList.traverse_ { resourceLocation =>
       draw(resourceLocation, posX, posY) >> Task.sleep(interval)
     }
   }
 
+  // TODO: Move outside
   def animateWater(assets: List[Water]): Task[Unit] = {
     Task.wanderUnordered(assets)(water => drawAnimated(water, 2, water.position._1, water.position._2, 250.millis)).void
   }
 
+  // TODO: Move outside
   def drawMovement[A <: AnimatedObject: AnimatedAsset](assets: List[A]): Task[Unit] = {
+
     def drawMovementSteps(asset: A): Task[Unit] = {
       val (destX, destY) = asset.position
       val (fromX, fromY) = asset.prevPosition
@@ -67,8 +71,8 @@ final class CanvasImage(ctx: Ctx2D, backgroundContext: Ctx2D, image: HTMLImageEl
           case (prevPositionTask, ((posX, posY), resourceLocation)) =>
             for {
               (prevX, prevY) <- prevPositionTask
-              _ <- Task(ctx.clearRect(prevX, prevY, standardWidth, standardHeight))
-              _ <- draw(resourceLocation, posX, posY)
+              _              <- Task(ctx.clearRect(prevX, prevY, standardWidth, standardHeight))
+              _              <- draw(resourceLocation, posX, posY)
             } yield (posX, posY)
         }
         .void
@@ -113,7 +117,8 @@ final class CanvasImage(ctx: Ctx2D, backgroundContext: Ctx2D, image: HTMLImageEl
   // TODO: explosion should start during contact
   // TODO: can be improved with map of positions
   // TODO: track bullets trajectory
-  def drawExplosions[A <: AnimatedObject: AnimatedAsset](assets: List[A]): Task[Unit] = {
+  // TODO: Move outside
+  def drawExplosions(assets: List[GameObject]): Task[Unit] = {
     assets
       .groupByNel(_.position)
       // TODO: bullets vs bullets and bullets vs tanks diff animation

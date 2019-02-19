@@ -38,18 +38,7 @@ object Asset {
     case o: AnimatedObject => movingObjectAsset.resourceLocation(o)
     case o: Water => waterAsset.resourceLocation(o)
     case Grass(_) => ResourceLocation(256, 64, standardWidth, standardHeight)
-    case b: BrickWall => brickLocation(b)
+    case b: BrickWall => BrickWallAsset.resourceLocation(b)
     case SteelWall(_) => ResourceLocation(256, 16, standardWidth, standardHeight)
-  }
-
-  private def brickLocation(brickWall: BrickWall): ResourceLocation = {
-    val offsetX =
-      brickWall.hitDirection.fold(256) {
-        case Direction.UP => 288
-        case Direction.DOWN => 320
-        case Direction.LEFT => 272
-        case Direction.RIGHT => 304
-      }
-    ResourceLocation(offsetX, 0, standardWidth, standardHeight)
   }
 }

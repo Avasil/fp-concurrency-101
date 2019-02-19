@@ -2,11 +2,10 @@ package tanks.assets.impl
 
 import shared.models.Direction
 import shared.models.GameObject.Bullet
-import tanks.assets.{AnimatedAsset, ResourceLocation, standardHeight, standardWidth}
+import tanks.assets.{standardHeight, standardWidth, AnimatedAsset, ResourceLocation}
 
 object BulletAsset extends AnimatedAsset[Bullet] {
 
-  // TODO: probably wrong
   private def offsetX(direction: Direction): Int =
     direction match {
       case Direction.UP => 320

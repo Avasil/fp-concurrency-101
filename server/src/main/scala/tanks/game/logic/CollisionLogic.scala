@@ -1,5 +1,5 @@
 package tanks.game.logic
-import shared.models.GameObject.{BrickWall, Bullet, Tank, Water}
+import shared.models.GameObject._
 import shared.models.{Direction, EnvObject, GameObject, GameState}
 import tanks.game.logic.CollisionInfo.dist
 
@@ -7,16 +7,16 @@ import scala.annotation.tailrec
 
 trait CollisionLogic {
 
-  def collisions(gameState: GameState): (Destroyed, GameState) = {
+  protected def resolveCollisions(gameState: GameState): (Destroyed, GameState) = {
     val GameState(tanks, bullets, environment) = collisionWithEnv(gameState)
 
-    val collisionInfo: List[CollisionInfo] = calcCollisionInfo(tanks, bullets, environment)
+    val collisionInfo: List[CollisionInfo]             = calcCollisionInfo(tanks, bullets, environment)
     val collisionsByBullet: Map[Bullet, CollisionInfo] = findCollisions(collisionInfo)
-    val (updatedTanks, updatedBullets, updatedEnv) = updateCollidedObjects(collisionsByBullet)
+    val (updatedTanks, updatedBullets, updatedEnv)     = updateCollidedObjects(collisionsByBullet)
 
-    val newTanks = tanks ++ updatedTanks.map(tank => tank.id -> tank).toMap
-    val newBullets = bullets ++ updatedBullets.map(bullet => bullet.id -> bullet).toMap
-    val newEnvironment: Map[(Int, Int), EnvObject] = updatedEnv.map(env => env.position -> env).toMap
+    val newTanks       = tanks ++ updatedTanks.map(tank => tank.id         -> tank).toMap
+    val newBullets     = bullets ++ updatedBullets.map(bullet => bullet.id -> bullet).toMap
+    val newEnvironment = updatedEnv.map(env => env.position                -> env).toMap
 
     val destroyed =
       Destroyed(updatedTanks.map(_.id), updatedBullets.map(_.id), updatedEnv.filter(_.hp <= 0).map(_.position))
@@ -28,8 +28,8 @@ trait CollisionLogic {
     val GameState(tanks, bullets, environment) = gameState
 
     val unstoppableEnv = environment.filter {
-      case (_, _: Water) => false
-      case _ => true
+      case (_, _: SteelWall) => true
+      case _                 => false
     }.keySet
 
     val updatedTanks: Map[Int, Tank] = tanks.mapValues { t: Tank =>
@@ -40,9 +40,9 @@ trait CollisionLogic {
     val updatedBullets = bullets.mapValues {
       case b @ Bullet(_, (x, y), _, direction) =>
         val (destX, destY) = direction match {
-          case Direction.UP => (x, y - 32)
-          case Direction.DOWN => (x, y + 32)
-          case Direction.LEFT => (x - 32, y)
+          case Direction.UP    => (x, y - 32)
+          case Direction.DOWN  => (x, y + 32)
+          case Direction.LEFT  => (x - 32, y)
           case Direction.RIGHT => (x + 32, y)
         }
 
@@ -65,13 +65,18 @@ trait CollisionLogic {
     bullets: Map[Int, Bullet],
     environment: Map[(Int, Int), EnvObject]
   ): List[CollisionInfo] = {
-    val tanksMovement: List[(Tank, Seq[(Int, Int)])] = tanks.mapValues {
+    val tanksMovement: List[(Tank, Stream[(Int, Int)])] = tanks.mapValues {
+      case t @ Tank(_, _, dest, prev, _) if dest == prev =>
+        t -> Stream.continually(dest)
       case t @ Tank(_, _, (posX, posY), (prevX, prevY), _) =>
-        t -> GameObject.movementCoords(prevX, prevY, posX, posY)
+        t -> GameObject.movementCoords(prevX, prevY, posX, posY).toStream
     }.values.toList
 
-    val brickWalls: Map[(Int, Int), BrickWall] = environment.collect { case (pos, b: BrickWall) => (pos, b) }
-    val brickPositions: Set[(Int, Int)] = brickWalls.keySet
+    val walls: Map[(Int, Int), EnvObject] = environment.collect {
+      case (pos, b: BrickWall) => (pos, b)
+      case (pos, s: SteelWall) => (pos, s)
+    }
+    val wallsPositions: Set[(Int, Int)] = walls.keySet
 
     val bulletsMovement: List[(Bullet, Seq[(Int, Int)])] = bullets.mapValues {
       case b @ Bullet(_, (posX, posY), (prevX, prevY), _) =>
@@ -91,7 +96,7 @@ trait CollisionLogic {
               }).flatten
 
         val wallCollisions: List[CollisionInfo] =
-          bulletPath.collect { case pos if brickPositions.contains(pos) => brickWalls.get(pos) }.flatten.toList
+          bulletPath.collect { case pos if wallsPositions.contains(pos) => walls.get(pos) }.flatten.toList
             .map(wall => CollisionInfo(bullet, dist(bullet, wall.position), wall.position, wall))
 
         val bulletCollisions: List[CollisionInfo] =
@@ -164,6 +169,11 @@ trait CollisionLogic {
         (w, b)
     }.toList.unzip
 
-    (destroyedTanks, destroyedBullets1 ++ destroyedBullets2 ++ destroyedBullets3, destroyedWalls)
+    val destroyedBullets4 = collisions.collect {
+      case (bullet, CollisionInfo(_, _, point, _: SteelWall)) =>
+        bullet.copy(position = point)
+    }.toList
+
+    (destroyedTanks, destroyedBullets1 ++ destroyedBullets2 ++ destroyedBullets3 ++ destroyedBullets4, destroyedWalls)
   }
 }

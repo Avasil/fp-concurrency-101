@@ -4,7 +4,7 @@ import shared.models.{GameState, MovementCommand}
 
 package object tanks {
 
-  type InputQueue = ConcurrentQueue[Task, MovementCommand]
+  type PlayersMovesQueue = ConcurrentQueue[Task, MovementCommand]
 
-  type OutputQueue = ConcurrentQueue[Task, GameState]
+  type GameStateQueue = ConcurrentQueue[Task, GameState]
 }

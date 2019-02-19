@@ -24,6 +24,15 @@ lazy val shared =
       )
     )
 
+lazy val exercises = (project in file("exercises"))
+  .settings(commonSettings)
+  .settings(
+    name := "exercises",
+    libraryDependencies ++= Seq(
+      "io.monix" %% "monix" % monixVersion
+    )
+  )
+
 lazy val sharedJS = shared.js
 lazy val sharedJVM = shared.jvm
 
