@@ -33,7 +33,7 @@ object ServerApp extends TaskApp {
         .start
       currentState = CurrentState(gameStateRef)
       botService   = new BotService(playersInputs, currentState)
-      _ <- gameStatus.runWhenActive(botService.runBotsLoop(List(1, 2, 3, 4, 5))).start
+      _ <- gameStatus.runWhenActive(botService.runBotsLoop(List.range(1, 11))).start
       _ <- ws.stream.compile.drain
     } yield ExitCode.Success
   }

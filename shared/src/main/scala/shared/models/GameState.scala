@@ -41,12 +41,17 @@ object GameState {
 
   def mapOne: GameState = {
     val tanks: Map[Int, Tank] = List(
-      0 -> Tank(0, Team.Green, (80, 240), (80, 240), Direction.UP),
-      1 -> Tank(1, Team.Silver, (112, 80), (112, 80), Direction.DOWN),
-      2 -> Tank(2, Team.Silver, (128, 80), (128, 80), Direction.DOWN),
-      3 -> Tank(3, Team.Silver, (160, 80), (160, 80), Direction.DOWN),
-      4 -> Tank(4, Team.Silver, (192, 80), (192, 80), Direction.DOWN),
-      5 -> Tank(5, Team.Silver, (224, 80), (224, 80), Direction.DOWN)
+      0  -> Tank(0, Team.Green, (80, 240), (80, 240), Direction.UP),
+      1  -> Tank(1, Team.Silver, (64, 96), (64, 96), Direction.DOWN),
+      2  -> Tank(2, Team.Silver, (112, 80), (112, 80), Direction.DOWN),
+      3  -> Tank(3, Team.Silver, (160, 48), (160, 48), Direction.DOWN),
+      4  -> Tank(4, Team.Silver, (208, 80), (208, 80), Direction.DOWN),
+      5  -> Tank(5, Team.Silver, (240, 96), (240, 96), Direction.DOWN),
+      6  -> Tank(6, Team.Silver, (272, 32), (272, 32), Direction.DOWN),
+      7  -> Tank(7, Team.Silver, (224, 80), (224, 80), Direction.DOWN),
+      8  -> Tank(8, Team.Silver, (144, 112), (144, 112), Direction.DOWN),
+      9  -> Tank(9, Team.Silver, (128, 192), (128, 192), Direction.DOWN),
+      10 -> Tank(10, Team.Silver, (176, 192), (176, 192), Direction.DOWN)
     ).toMap
 
     GameState(tanks, Map.empty, environment)
