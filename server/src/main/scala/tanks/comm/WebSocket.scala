@@ -3,7 +3,6 @@ package tanks
 package comm
 
 import cats.effect._
-import cats.effect.concurrent.MVar
 import cats.implicits._
 import fs2._
 import monix.catnap.ConcurrentQueue

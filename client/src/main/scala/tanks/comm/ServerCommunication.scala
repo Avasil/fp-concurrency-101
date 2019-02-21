@@ -48,7 +48,7 @@ final class ServerCommunication private (socket: WebSocket, queue: ConcurrentQue
       .intervalAtFixedRate(20.millis)
       .mapEval(_ =>
         checkUserInput.flatMap(_.fold(Task.unit)(movement =>
-          Task(println(s"sending $movement")) >> Task(socket.send(movement)))))
+          Task(println(s"sending $movement")) >> socket.send(movement))))
       .completedL
 
   private val keysDown: mutable.HashSet[Movement] =

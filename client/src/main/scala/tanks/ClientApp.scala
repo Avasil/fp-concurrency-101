@@ -24,9 +24,9 @@ object ClientApp extends TaskApp {
       Observable.fromIterable(GameState.testGame).delayOnNext(150.millis) ++ testGame
 
     for {
-      _ <- Task.eval(println("Hello, client!"))
-//      gameState <- ServerCommunication.initialize()
-      gameState = testGame
+      _         <- Task.eval(println("Hello, client!"))
+      gameState <- ServerCommunication.initialize()
+//      gameState = testGame
       bgImage <- CanvasImage.loadImage(bgCtx, "images/sprites.png")
       image   <- CanvasImage.loadImage(ctx, "images/sprites-transparent.png")
       canvasImage = new CanvasImage(ctx, bgCtx, image, bgImage)
