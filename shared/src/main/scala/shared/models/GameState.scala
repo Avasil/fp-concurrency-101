@@ -34,10 +34,7 @@ object GameState {
   val empty = GameState(Map.empty, Map.empty, Map.empty)
 
   def combine(g1: GameState, g2: GameState): GameState = {
-    val env = (g1.environment ++ g2.environment).filter {
-      case (_, BrickWall(_, _, 0)) => false
-      case _                       => true
-    }
+    val env = g1.environment ++ g2.environment
     GameState(g2.players, g2.bullets, env)
   }
 
@@ -51,41 +48,43 @@ object GameState {
       else if ((y == 128 || y == 176) && x != 144 && x != 160) Some(Water((x, y)))
       else if (brickWalls(x, y)) Some(BrickWall((x, y), None))
       else None
-    }).collect { case Some(cos) => cos.position -> cos }.toMap
+    }).collect { case Some(cos) => cos.destination -> cos }.toMap
 
   def mapOne: GameState = {
     val tanks: Map[Int, Tank] = List(
       0 -> Tank(0, Team.Green, (80, 240), (80, 240), Direction.UP),
-      1 -> Tank(1, Team.Yellow, (112, 80), (112, 80), Direction.DOWN),
-      2 -> Tank(2, Team.Yellow, (128, 80), (128, 80), Direction.DOWN),
-      3 -> Tank(3, Team.Yellow, (160, 80), (160, 80), Direction.DOWN),
-      4 -> Tank(4, Team.Yellow, (192, 80), (192, 80), Direction.DOWN),
-      5 -> Tank(5, Team.Yellow, (224, 80), (224, 80), Direction.DOWN)
+      1 -> Tank(1, Team.Silver, (112, 80), (112, 80), Direction.DOWN),
+      2 -> Tank(2, Team.Silver, (128, 80), (128, 80), Direction.DOWN),
+      3 -> Tank(3, Team.Silver, (160, 80), (160, 80), Direction.DOWN),
+      4 -> Tank(4, Team.Silver, (192, 80), (192, 80), Direction.DOWN),
+      5 -> Tank(5, Team.Silver, (224, 80), (224, 80), Direction.DOWN)
     ).toMap
 
     GameState(tanks, Map.empty, environment)
   }
 
-  def mapTwo: GameState = {
-    val tanks: Map[Int, Tank] = List(
-      0 -> Tank(0, Team.Green, (80, 96), (80, 80), Direction.DOWN),
-      1 -> Tank(1, Team.Yellow, (80, 176), (80, 160), Direction.UP)
+  def testGame: List[GameState] = {
+    val tanks1: Map[Int, Tank] = List(
+      0 -> Tank(0, Team.Green, (80, 240), (80, 240), Direction.UP),
+      5 -> Tank(5, Team.Silver, (80, 80), (80, 80), Direction.DOWN)
     ).toMap
 
-    GameState(tanks, Map.empty, environment)
-  }
+    val bullets1: Map[Int, Bullet] = Map.empty
 
-  def mapThree: GameState = {
-    val tanks: Map[Int, Tank] = Map(
-      0 -> Tank(0, Team.Green, (80, 96), (80, 96), Direction.DOWN),
-      1 -> Tank(1, Team.Yellow, (80, 176), (80, 176), Direction.UP)
+    val tanks2: Map[Int, Tank] = List(
+      0 -> Tank(0, Team.Green, (80, 240), (80, 240), Direction.UP),
+      5 -> Tank(5, Team.Silver, (80, 80), (80, 80), Direction.DOWN)
+    ).toMap
+
+    val bullets2: Map[Int, Bullet] = Map(
+      0 -> Bullet(0, Team.Green, (80, 160), (80, 224), Direction.UP),
+      1 -> Bullet(1, Team.Silver, (80, 160), (80, 96), Direction.DOWN)
     )
 
-    val bullets = Map(
-      2 -> Bullet(2, (80, 96), (80, 160), Direction.UP),
-      3 -> Bullet(3, (80, 176), (80, 96), Direction.DOWN)
+    List(
+      GameState(tanks1, bullets1, environment),
+      GameState(tanks2, bullets2, environment)
     )
-
-    GameState(tanks, bullets, environment)
   }
+
 }

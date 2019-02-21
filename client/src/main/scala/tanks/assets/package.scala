@@ -5,10 +5,14 @@ package object assets {
     def resourceLocation: ResourceLocation = A.resourceLocation(a)
   }
 
-  implicit class MovingAssetSyntax[A](a: A)(implicit A: AnimatedAsset[A]) {
+  implicit class AnimatedAssetSyntax[A](a: A)(implicit A: AnimatedAsset[A]) {
     def getAnimatedOffsetX: Stream[ResourceLocation] = A.dynamicOffset(a)
   }
 
-  val standardWidth = 16
+  implicit class MovingAssetSyntax[A](a: A)(implicit A: MovingAsset[A]) {
+    def stepSize: Int = A.stepSize(a)
+  }
+
+  val standardWidth  = 16
   val standardHeight = 16
 }

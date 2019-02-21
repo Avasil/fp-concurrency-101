@@ -1,7 +1,7 @@
 package shared.models
 
 sealed trait GameObject {
-  def position: (Int, Int)
+  def destination: (Int, Int)
 }
 
 sealed trait EnvObject extends GameObject
@@ -56,18 +56,18 @@ object GameObject {
     coords.toList
   }
 
-  final case class Tank(id: Int, team: Team, position: (Int, Int), prevPosition: (Int, Int), direction: Direction)
+  final case class Tank(id: Int, team: Team, destination: (Int, Int), prevPosition: (Int, Int), direction: Direction)
       extends AnimatedObject
 
-  final case class Bullet(id: Int, position: (Int, Int), prevPosition: (Int, Int), direction: Direction)
+  final case class Bullet(id: Int, team: Team, destination: (Int, Int), prevPosition: (Int, Int), direction: Direction)
       extends AnimatedObject
 
-  final case class Water(position: (Int, Int)) extends EnvObject
+  final case class Water(destination: (Int, Int)) extends EnvObject
 
-  final case class Grass(position: (Int, Int)) extends EnvObject
+  final case class Grass(destination: (Int, Int)) extends EnvObject
 
-  final case class BrickWall(position: (Int, Int), hitDirection: Option[Direction], hp: Int = 2) extends EnvObject
+  final case class BrickWall(destination: (Int, Int), hitDirection: Option[Direction], hp: Int = 2) extends EnvObject
 
-  final case class SteelWall(position: (Int, Int)) extends EnvObject
+  final case class SteelWall(destination: (Int, Int)) extends EnvObject
 
 }

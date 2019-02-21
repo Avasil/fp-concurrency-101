@@ -5,6 +5,7 @@ import cats.implicits._
 import monix.catnap.Semaphore
 import monix.eval.Task
 import monix.reactive.Observable
+import org.scalajs.dom
 import shared.models.GameObject.Water
 import shared.models.{AnimatedObject, GameObject, GameState}
 import tanks.animation.CanvasImage
@@ -15,23 +16,21 @@ object GameLoop {
 
   def gameLoop(canvas: CanvasImage, obs: Observable[GameState]): Task[Unit] = {
     for {
-      stopSignal <- Deferred[Task, Unit]
-      sem        <- Semaphore[Task](1L)
+      sem <- Semaphore[Task](1L)
       _ <- obs
         .scan(GameState.empty)(GameState.combine)
         .mapEval { gameState =>
           val (animated, static, water) = split(gameState)
           val animateTask =
             for {
-              _ <- canvas.drawAll(static)
-              _ <- Task.race(sem.withPermit(canvas.animateWater(water).loopForever), stopSignal.get).start
+              _ <- Task.from(canvas.drawEnvironment(static))
+              _ <- sem.withPermit(canvas.animateWater(water).loopForever).start
               _ <- canvas.drawMovement(animated)
               _ <- canvas.drawExplosions(animated).start
             } yield ()
           animateTask
         }
         .completedL
-        .guarantee(stopSignal.complete(()).attempt.void)
     } yield ()
   }
 

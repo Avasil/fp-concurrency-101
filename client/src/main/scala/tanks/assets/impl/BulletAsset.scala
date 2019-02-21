@@ -2,15 +2,15 @@ package tanks.assets.impl
 
 import shared.models.Direction
 import shared.models.GameObject.Bullet
-import tanks.assets.{standardHeight, standardWidth, AnimatedAsset, ResourceLocation}
+import tanks.assets.{standardHeight, standardWidth, MovingAsset, ResourceLocation}
 
-object BulletAsset extends AnimatedAsset[Bullet] {
+object BulletAsset extends MovingAsset[Bullet] {
 
   private def offsetX(direction: Direction): Int =
     direction match {
-      case Direction.UP => 320
-      case Direction.DOWN => 336
-      case Direction.LEFT => 328
+      case Direction.UP    => 320
+      case Direction.DOWN  => 336
+      case Direction.LEFT  => 328
       case Direction.RIGHT => 344
     }
 
@@ -19,4 +19,6 @@ object BulletAsset extends AnimatedAsset[Bullet] {
 
   override def resourceLocation(a: Bullet): ResourceLocation =
     ResourceLocation(offsetX(a.direction), 96, standardWidth / 2, standardHeight)
+
+  override def stepSize(a: Bullet): Int = 4
 }

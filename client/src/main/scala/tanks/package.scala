@@ -15,10 +15,10 @@ package object tanks {
 
   type Ctx2D = dom.CanvasRenderingContext2D
 
-  def loadImage(ctx: Ctx2D): Task[HTMLImageElement] =
+  def loadImage(ctx: Ctx2D, src: String = "images/general-sprites2.png"): Task[HTMLImageElement] =
     Task.async { cb =>
       val image = dom.document.createElement("img").asInstanceOf[HTMLImageElement]
-      image.src = "images/general-sprites.png"
+      image.src = src
       image.onload = { _ =>
         cb.onSuccess(image)
       }

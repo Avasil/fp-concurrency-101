@@ -3,7 +3,8 @@ package tanks
 package communication
 
 import cats.effect._
-import cats.effect.concurrent.Deferred
+import cats.effect.concurrent.MVar
+import cats.implicits._
 import fs2._
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -15,12 +16,14 @@ import org.http4s.server.websocket._
 import org.http4s.websocket.WebSocketFrame
 import org.http4s.websocket.WebSocketFrame._
 import shared.models.{CommMesage, MovementCommand, WelcomeMessage}
+import tanks.game.GameStatus
 
 final class WebSocket(
   clientInputs: PlayersMovesQueue,
   gameStateQueue: GameStateQueue,
-  gameStarted: Deferred[Task, Unit],
-  logger: Logger)(implicit s: Scheduler)
+  game: GameStatus,
+  logger: Logger
+)(implicit s: Scheduler)
     extends Http4sDsl[Task] {
 
   private def routes: HttpRoutes[Task] = HttpRoutes.of[Task] {
@@ -31,6 +34,8 @@ final class WebSocket(
           .map(s => Text(s.encode.toString()))
 
       val fromClient: Pipe[Task, WebSocketFrame, Unit] = _.evalMap {
+        case Close(_) =>
+          logger.log("Closing connection!") >> game.stop >> gameStateQueue.clear
         case Text(t, _) =>
           CommMesage
             .decode(t)
@@ -40,7 +45,7 @@ final class WebSocket(
                 for {
                   _ <- logger.log(s"Received msg $msg")
                   _ <- msg match {
-                    case WelcomeMessage(_) => gameStarted.complete(()).attempt
+                    case WelcomeMessage(_)  => game.start
                     case m: MovementCommand => clientInputs.offer(m)
                   }
                 } yield ()

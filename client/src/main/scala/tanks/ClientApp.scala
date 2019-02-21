@@ -9,6 +9,7 @@ import shared.models.GameState
 import tanks.animation.CanvasImage
 import tanks.communication.ServerCommunication
 import tanks.game.GameLoop.gameLoop
+import scala.concurrent.duration._
 
 object ClientApp extends TaskApp {
   override def run(args: List[String]): Task[ExitCode] = {
@@ -17,13 +18,14 @@ object ClientApp extends TaskApp {
     val ctx              = tanksCanvas.getContext("2d").asInstanceOf[Ctx2D]
     val bgCtx            = backgroundCanvas.getContext("2d").asInstanceOf[Ctx2D]
 
+    def testGame: Observable[GameState] =
+      Observable.fromIterable(GameState.testGame).delayOnNext(150.millis) ++ testGame
+
     for {
-//      gameState <- ServerCommunication.initialize()
-      gameState <- Task(Observable(GameState.mapOne) ++ Observable.never[GameState])
-//          Observable(GameState.mapTwo).delayExecution(200.millis) ++
-//          Observable(GameState.mapThree).delayExecution(200.millis) ++
-//          Observable.never[GameState])
-      bgImage <- loadImage(bgCtx)
+      _         <- Task.eval(println("Hello, client!"))
+      gameState <- ServerCommunication.initialize()
+//      gameState <- Task(testGame)
+      bgImage <- loadImage(bgCtx, "images/general-sprites.png")
       image   <- loadImage(ctx)
       canvasImage = new CanvasImage(ctx, bgCtx, image, bgImage)
       _ <- canvasImage.drawBackground()
