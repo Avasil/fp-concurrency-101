@@ -16,29 +16,17 @@ final case class GameState(
 }
 
 object GameState {
-  implicit val genDevConfig: Configuration = Configuration.default
+  val empty: GameState = GameState(Map.empty, Map.empty, Map.empty)
 
-  implicit val tupleKeyEncoder: KeyEncoder[(Int, Int)] = _.asJson.toString()
-  implicit val tupleKeyDecoder: KeyDecoder[(Int, Int)] = str => io.circe.parser.decode[(Int, Int)](str).toOption
-
-  private def encode(msg: GameState): Json =
-    msg.asJson
-
-  def decode(s: String): Either[circe.Error, GameState] =
-    io.circe.parser.decode[GameState](s)
-
-  private val edges      = (x: Int, y: Int) => (x == 0 || x == 304) || (y == 0 || y == 304)
-  private val edges2     = (x: Int, y: Int) => (x == 16 || x == 288) || (y == 16 || y == 288)
-  private val brickWalls = (x: Int, y: Int) => Set(128, 144, 160, 176).contains(y)
-
-  val empty = GameState(Map.empty, Map.empty, Map.empty)
-
-  def combine(g1: GameState, g2: GameState): GameState = {
-    val env = g1.environment ++ g2.environment
-    GameState(g2.players, g2.bullets, env)
+  def mergeDelta(g1: GameState, g2: GameState): GameState = {
+    GameState(g2.players, g2.bullets, g1.environment ++ g2.environment)
   }
 
-  val environment: Map[(Int, Int), EnvObject] =
+  def environment: Map[(Int, Int), EnvObject] = {
+    val edges      = (x: Int, y: Int) => (x == 0 || x == 304) || (y == 0 || y == 304)
+    val edges2     = (x: Int, y: Int) => (x == 16 || x == 288) || (y == 16 || y == 288)
+    val brickWalls = (x: Int, y: Int) => Set(128, 144, 160, 176).contains(y)
+
     (for {
       x <- 0 to (304, 16)
       y <- 0 to (304, 16)
@@ -49,6 +37,7 @@ object GameState {
       else if (brickWalls(x, y)) Some(BrickWall((x, y), None))
       else None
     }).collect { case Some(cos) => cos.destination -> cos }.toMap
+  }
 
   def mapOne: GameState = {
     val tanks: Map[Int, Tank] = List(
@@ -87,4 +76,14 @@ object GameState {
     )
   }
 
+  implicit val genDevConfig: Configuration = Configuration.default
+
+  implicit val tupleKeyEncoder: KeyEncoder[(Int, Int)] = _.asJson.toString()
+  implicit val tupleKeyDecoder: KeyDecoder[(Int, Int)] = str => io.circe.parser.decode[(Int, Int)](str).toOption
+
+  private def encode(msg: GameState): Json =
+    msg.asJson
+
+  def decode(s: String): Either[circe.Error, GameState] =
+    io.circe.parser.decode[GameState](s)
 }

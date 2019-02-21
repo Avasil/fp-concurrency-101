@@ -6,9 +6,11 @@ import monix.reactive.Observable
 import org.scalajs.dom
 import org.scalajs.dom.html
 import shared.models.GameState
-import tanks.animation.CanvasImage
-import tanks.communication.ServerCommunication
+import tanks.canvas.CanvasImage
+import tanks.canvas.CanvasImage.Ctx2D
+import tanks.comm.ServerCommunication
 import tanks.game.GameLoop.gameLoop
+
 import scala.concurrent.duration._
 
 object ClientApp extends TaskApp {
@@ -22,11 +24,11 @@ object ClientApp extends TaskApp {
       Observable.fromIterable(GameState.testGame).delayOnNext(150.millis) ++ testGame
 
     for {
-      _         <- Task.eval(println("Hello, client!"))
-      gameState <- ServerCommunication.initialize()
-//      gameState <- Task(testGame)
-      bgImage <- loadImage(bgCtx, "images/general-sprites.png")
-      image   <- loadImage(ctx)
+      _ <- Task.eval(println("Hello, client!"))
+//      gameState <- ServerCommunication.initialize()
+      gameState = testGame
+      bgImage <- CanvasImage.loadImage(bgCtx, "images/sprites.png")
+      image   <- CanvasImage.loadImage(ctx, "images/sprites-transparent.png")
       canvasImage = new CanvasImage(ctx, bgCtx, image, bgImage)
       _ <- canvasImage.drawBackground()
       _ <- gameLoop(canvasImage, gameState)

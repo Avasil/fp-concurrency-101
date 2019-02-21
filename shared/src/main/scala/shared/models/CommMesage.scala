@@ -28,9 +28,9 @@ object Movement {
   case object Left extends Movement
 
   def fromDirection(direction: Direction): Movement = direction match {
-    case Direction.UP => Up
-    case Direction.DOWN => Down
-    case Direction.LEFT => Left
+    case Direction.UP    => Up
+    case Direction.DOWN  => Down
+    case Direction.LEFT  => Left
     case Direction.RIGHT => Right
   }
 

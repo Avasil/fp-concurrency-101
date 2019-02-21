@@ -5,7 +5,7 @@ import cats.effect.concurrent.Ref
 import monix.catnap.ConcurrentQueue
 import monix.eval.{Task, TaskApp}
 import shared.models._
-import tanks.communication.WebSocket
+import tanks.comm.WebSocket
 import tanks.game.{BotService, CurrentState, GameLoop, GameStatus}
 
 object ServerApp extends TaskApp {
@@ -25,7 +25,7 @@ object ServerApp extends TaskApp {
       _ <- gameStatus
         .runWhenActive(
           gameStateObservable
-            .doOnNext(latestState => gameStateRef.update(lastState => GameState.combine(lastState, latestState)))
+            .doOnNext(latestState => gameStateRef.update(lastState => GameState.mergeDelta(lastState, latestState)))
             .mapEval(gameStateQueue.offer)
             .completedL
             .guarantee(gameStateRef.set(initialState))

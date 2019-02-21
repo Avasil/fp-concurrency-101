@@ -1,6 +1,6 @@
 package tanks
 
-package communication
+package comm
 
 import cats.effect._
 import cats.effect.concurrent.MVar

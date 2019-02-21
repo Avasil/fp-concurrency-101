@@ -1,16 +1,12 @@
 package tanks.game
 
-import cats.effect.concurrent.Deferred
 import cats.implicits._
 import monix.catnap.Semaphore
 import monix.eval.Task
 import monix.reactive.Observable
-import org.scalajs.dom
 import shared.models.GameObject.Water
 import shared.models.{AnimatedObject, GameObject, GameState}
-import tanks.animation.CanvasImage
-
-import scala.concurrent.duration._
+import tanks.canvas.CanvasImage
 
 object GameLoop {
 
@@ -18,12 +14,12 @@ object GameLoop {
     for {
       sem <- Semaphore[Task](1L)
       _ <- obs
-        .scan(GameState.empty)(GameState.combine)
+        .scan(GameState.empty)(GameState.mergeDelta)
         .mapEval { gameState =>
           val (animated, static, water) = split(gameState)
           val animateTask =
             for {
-              _ <- Task.from(canvas.drawEnvironment(static))
+              _ <- canvas.drawEnvironment(static)
               _ <- sem.withPermit(canvas.animateWater(water).loopForever).start
               _ <- canvas.drawMovement(animated)
               _ <- canvas.drawExplosions(animated).start

@@ -1,14 +1,14 @@
-package tanks.animation
+package tanks.canvas
 
 import cats.implicits._
-import monix.eval.{Coeval, Task}
+import monix.eval.Task
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLImageElement
 import shared.models.GameObject.{movementCoords, Bullet, Tank, Water}
 import shared.models.{AnimatedObject, GameObject}
-import tanks.Ctx2D
 import tanks.assets.impl.Explosion
-import tanks.assets.{AnimatedAsset, Asset, ResourceLocation, standardHeight, standardWidth, _}
+import tanks.assets.{AnimatedAsset, ResourceLocation, standardHeight, standardWidth, _}
+import tanks.canvas.CanvasImage.Ctx2D
 
 import scala.concurrent.duration._
 
@@ -18,47 +18,14 @@ final class CanvasImage(tanksCtx: Ctx2D, bgCtx: Ctx2D, tanksImage: HTMLImageElem
     bgCtx.fillRect(0, 0, 320, 320)
   }
 
-  def drawEnvironment[A <: GameObject: Asset](assets: List[A]): Coeval[Unit] = {
-    Coeval
+  def drawEnvironment(assets: List[GameObject]): Task[Unit] = {
+    Task
       .traverse(assets) { asset =>
         val (x, y) = asset.destination
         bgCtx.fillRect(x, y, standardWidth, standardHeight)
-        draw(asset.resourceLocation, x, y, bgCtx, bgImage)
+        Task(draw(asset.resourceLocation, x, y, bgCtx, bgImage))
       }
       .void
-  }
-
-  def draw(
-    pos: ResourceLocation,
-    posX: Double,
-    posY: Double,
-    ctx: Ctx2D = tanksCtx,
-    image: HTMLImageElement = tanksImage
-  ): Coeval[Unit] =
-    Coeval {
-      ctx.drawImage(
-        image = image,
-        offsetX = pos.offsetX,
-        offsetY = pos.offsetY,
-        width = pos.width,
-        height = pos.height,
-        canvasOffsetX = posX,
-        canvasOffsetY = posY,
-        canvasImageHeight = pos.height,
-        canvasImageWidth = pos.width
-      )
-    }
-
-  def drawAnimated[A: AnimatedAsset](
-    asset: A,
-    forms: Int,
-    posX: Double,
-    posY: Double,
-    interval: FiniteDuration
-  ): Task[Unit] = {
-    asset.getAnimatedOffsetX.take(forms).toList.traverse_ { resourceLocation =>
-      Task.from(draw(resourceLocation, posX, posY, bgCtx, bgImage)) >> Task.sleep(interval)
-    }
   }
 
   def animateWater(assets: List[Water]): Task[Unit] =
@@ -66,7 +33,7 @@ final class CanvasImage(tanksCtx: Ctx2D, bgCtx: Ctx2D, tanksImage: HTMLImageElem
       .wanderUnordered(assets)(water => drawAnimated(water, 2, water.destination._1, water.destination._2, 250.millis))
       .void
 
-  def drawMovement[A <: AnimatedObject: AnimatedAsset](assets: List[A]): Task[Unit] = {
+  def drawMovement(assets: List[AnimatedObject]): Task[Unit] = {
     def drawMovementSteps(asset: AnimatedObject): Task[Unit] = Task {
       val (destX, destY) = asset.destination
       val (fromX, fromY) = asset.prevPosition
@@ -80,10 +47,8 @@ final class CanvasImage(tanksCtx: Ctx2D, bgCtx: Ctx2D, tanksImage: HTMLImageElem
           val (prevX, prevY) = prevPosition
           steps match {
             case ((x, y), resourceLocation) :: tail =>
-//              if (movementSteps.size > 1)
-//                println(s"clear $prevX, $prevY, draw $x, $y")
               tanksCtx.clearRect(prevX, prevY, standardWidth, standardHeight)
-              draw(resourceLocation, x, y).runTry()
+              draw(resourceLocation, x, y)
               dom.window.requestAnimationFrame(_ => loop((x, y), tail))
             case Nil =>
               if (movementSteps.size > 1)
@@ -118,4 +83,49 @@ final class CanvasImage(tanksCtx: Ctx2D, bgCtx: Ctx2D, tanksImage: HTMLImageElem
           drawAnimated(Explosion, 5, x, y, 100.millis)
       }
   }
+
+  private def drawAnimated[A: AnimatedAsset](
+    asset: A,
+    forms: Int,
+    posX: Double,
+    posY: Double,
+    interval: FiniteDuration
+  ): Task[Unit] = {
+    asset.getAnimatedOffsetX.take(forms).toList.traverse_ { resourceLocation =>
+      Task(draw(resourceLocation, posX, posY, bgCtx, bgImage)) >> Task.sleep(interval)
+    }
+  }
+
+  private def draw(
+    pos: ResourceLocation,
+    posX: Double,
+    posY: Double,
+    ctx: Ctx2D = tanksCtx,
+    image: HTMLImageElement = tanksImage
+  ): Unit =
+    ctx.drawImage(
+      image = image,
+      offsetX = pos.offsetX,
+      offsetY = pos.offsetY,
+      width = pos.width,
+      height = pos.height,
+      canvasOffsetX = posX,
+      canvasOffsetY = posY,
+      canvasImageHeight = pos.height,
+      canvasImageWidth = pos.width
+    )
+}
+
+object CanvasImage {
+
+  type Ctx2D = dom.CanvasRenderingContext2D
+
+  def loadImage(ctx: Ctx2D, src: String): Task[HTMLImageElement] =
+    Task.async { cb =>
+      val image = dom.document.createElement("img").asInstanceOf[HTMLImageElement]
+      image.src = src
+      image.onload = { _ =>
+        cb.onSuccess(image)
+      }
+    }
 }

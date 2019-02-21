@@ -1,11 +1,10 @@
-package tanks.communication
+package tanks.comm
 
 import cats.syntax.flatMap._
 import monix.catnap.ConcurrentQueue
 import monix.eval.Task
 import monix.reactive.Observable
 import org.scalajs.dom
-import org.scalajs.dom.WebSocket
 import shared.models.{GameState, Movement, MovementCommand, WelcomeMessage}
 
 import scala.collection.mutable
@@ -15,60 +14,41 @@ object ServerCommunication {
 
   def initialize(serverUrl: String = "ws://localhost:8080/ws"): Task[Observable[GameState]] = {
     for {
-      queue <- ConcurrentQueue.unbounded[Task, GameState]()
-      socket = new WebSocket(serverUrl)
+      queue  <- ConcurrentQueue.unbounded[Task, GameState]()
+      socket <- WebSocket(serverUrl)
       server = new ServerCommunication(socket, queue)
       _ <- server.setup()
     } yield server.gameState
   }
 }
 
-final class ServerCommunication private (socket: dom.WebSocket, queue: ConcurrentQueue[Task, GameState]) {
+final class ServerCommunication private (socket: WebSocket, queue: ConcurrentQueue[Task, GameState]) {
 
   def setup(): Task[Unit] =
     for {
-      _ <- waitForSocket()
+      _ <- socket.open()
       _ <- sendWelcomeMessage()
       _ <- addKeyListeners()
-      _ <- receiveNewState()
-      _ <- sendMovementCommand().start
+      _ <- addNewStateToQueue()
+      _ <- sendMovementLoop().start
     } yield ()
 
   private def gameState: Observable[GameState] =
     Observable.repeatEvalF(queue.poll)
 
-  private def waitForSocket(): Task[Unit] =
-    Task.async { cb =>
-      socket.onopen = { _ =>
-        cb.onSuccess(())
-      }
-    }
-
   private def sendWelcomeMessage(): Task[Unit] = {
-    Task(socket.send(WelcomeMessage("Hi!").encode.noSpaces))
+    socket.send(WelcomeMessage("Hi!"))
   }
 
-  private def receiveNewState(): Task[Unit] = Task.deferAction { implicit s =>
-    Task {
-      socket.onmessage = (e: dom.MessageEvent) => {
-        GameState
-          .decode(e.data.toString)
-          .fold(
-            err => println(s"Could not decode ${err.getMessage}"),
-            msg => {
-              queue.offer(msg).runToFuture
-            }
-          )
-      }
-    }
-  }
+  private def addNewStateToQueue(): Task[Unit] =
+    socket.doOnMessage(queue.offer)
 
-  private def sendMovementCommand(): Task[Unit] =
+  private def sendMovementLoop(): Task[Unit] =
     Observable
       .intervalAtFixedRate(20.millis)
       .mapEval(_ =>
         checkUserInput.flatMap(_.fold(Task.unit)(movement =>
-          Task(println(s"sending $movement")) >> Task(socket.send(movement.encode.toString())))))
+          Task(println(s"sending $movement")) >> Task(socket.send(movement)))))
       .completedL
 
   private val keysDown: mutable.HashSet[Movement] =
