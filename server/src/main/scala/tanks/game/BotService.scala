@@ -1,14 +1,14 @@
 package tanks.game
 import cats.syntax.functor._
+import monix.catnap.ConcurrentQueue
 import monix.eval.Task
 import shared.models.GameObject.Tank
 import shared.models.{Direction, Movement, MovementCommand}
-import tanks.PlayersMovesQueue
 
 import scala.concurrent.duration._
 import scala.util.Random
 
-final class BotService(playersInputs: PlayersMovesQueue, currentState: CurrentState) {
+final class BotService(playersInputs: ConcurrentQueue[Task, MovementCommand], currentState: CurrentState) {
 
   def runBotsLoop(ids: List[Int]): Task[Unit] =
     Task.wanderUnordered(ids)(runBot(_).delayExecution(500.millis).loopForever).void

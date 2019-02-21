@@ -58,8 +58,6 @@ object GameState {
       5 -> Tank(5, Team.Silver, (80, 80), (80, 80), Direction.DOWN)
     ).toMap
 
-    val bullets1: Map[Int, Bullet] = Map.empty
-
     val tanks2: Map[Int, Tank] = List(
       0 -> Tank(0, Team.Green, (80, 240), (80, 240), Direction.UP),
       5 -> Tank(5, Team.Silver, (80, 80), (80, 80), Direction.DOWN)
@@ -70,9 +68,21 @@ object GameState {
       1 -> Bullet(1, Team.Silver, (80, 160), (80, 96), Direction.DOWN)
     )
 
+    val tanks3: Map[Int, Tank] = List(
+      0 -> Tank(0, Team.Green, (80, 256), (80, 240), Direction.UP),
+      5 -> Tank(5, Team.Silver, (80, 64), (80, 80), Direction.DOWN)
+    ).toMap
+
+    val tanks4: Map[Int, Tank] = List(
+      0 -> Tank(0, Team.Green, (80, 240), (80, 256), Direction.UP),
+      5 -> Tank(5, Team.Silver, (80, 80), (80, 64), Direction.DOWN)
+    ).toMap
+
     List(
-      GameState(tanks1, bullets1, environment),
-      GameState(tanks2, bullets2, environment)
+      GameState(tanks1, Map.empty, environment),
+      GameState(tanks2, bullets2, environment),
+      GameState(tanks3, Map.empty, environment),
+      GameState(tanks4, Map.empty, environment)
     )
   }
 

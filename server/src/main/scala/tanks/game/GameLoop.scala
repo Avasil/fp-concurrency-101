@@ -40,7 +40,6 @@ final class GameLoop private (
             val (destroyed, deltaState) =
               resolveCollisions(GameState(updatedPlayers, updatedBullets, environment))
 
-            // remove from new state but send last path to the client
             (Destroyed.update(GameState.mergeDelta(gameState, deltaState), destroyed), deltaState)
         }
         .map { case (_, delta) => delta }

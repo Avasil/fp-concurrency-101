@@ -6,6 +6,7 @@ import cats.effect._
 import cats.effect.concurrent.MVar
 import cats.implicits._
 import fs2._
+import monix.catnap.ConcurrentQueue
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.http4s._
@@ -15,12 +16,12 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.websocket._
 import org.http4s.websocket.WebSocketFrame
 import org.http4s.websocket.WebSocketFrame._
-import shared.models.{CommMesage, MovementCommand, WelcomeMessage}
+import shared.models.{CommMesage, GameState, MovementCommand, WelcomeMessage}
 import tanks.game.GameStatus
 
 final class WebSocket(
-  clientInputs: PlayersMovesQueue,
-  gameStateQueue: GameStateQueue,
+  clientInputs: ConcurrentQueue[Task, MovementCommand],
+  gameStateQueue: ConcurrentQueue[Task, GameState],
   game: GameStatus,
   logger: Logger
 )(implicit s: Scheduler)
