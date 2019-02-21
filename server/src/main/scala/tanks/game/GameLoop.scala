@@ -12,15 +12,13 @@ import scala.concurrent.duration._
 object GameLoop {
 
   def apply(
-    gameStatus: GameStatus,
     playerInputs: ConcurrentQueue[Task, MovementCommand],
     initialState: GameState
   ): GameLoop =
-    new GameLoop(gameStatus, playerInputs, initialState)
+    new GameLoop(playerInputs, initialState)
 }
 
 final class GameLoop private (
-  gameStatus: GameStatus,
   playerInputs: ConcurrentQueue[Task, MovementCommand],
   initialState: GameState
 ) extends CollisionLogic with TankMovement {

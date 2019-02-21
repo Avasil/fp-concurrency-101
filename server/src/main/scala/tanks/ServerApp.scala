@@ -21,7 +21,7 @@ object ServerApp extends TaskApp {
       gameStateRef   <- Ref[Task].of[GameState](initialState)
       gameStatus     <- GameStatus()
       ws                  = new WebSocket(playersInputs, gameStateQueue, gameStatus, logger)(scheduler)
-      gameStateObservable = GameLoop(gameStatus, playersInputs, initialState).gameStateObservable
+      gameStateObservable = GameLoop(playersInputs, initialState).gameStateObservable
       _ <- gameStatus
         .runWhenActive(
           gameStateObservable
