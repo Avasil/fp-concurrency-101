@@ -30,7 +30,10 @@ final class ServerCommunication private (socket: WebSocket, queue: ConcurrentQue
       _ <- sendWelcomeMessage()
       _ <- addKeyListeners()
       _ <- addNewStateToQueue()
-      _ <- sendMovementLoop().start
+      // TODO 5. Sending Movements in a loop
+      // We would like to send it in a loop but we also want to return from the function
+      // so it all happens "in the background".
+      _ <- sendMovementLoop()
     } yield ()
 
   private def gameState: Observable[GameState] =
@@ -43,13 +46,13 @@ final class ServerCommunication private (socket: WebSocket, queue: ConcurrentQue
   private def addNewStateToQueue(): Task[Unit] =
     socket.doOnMessage(queue.offer)
 
-  private def sendMovementLoop(): Task[Unit] =
-    Observable
-      .intervalAtFixedRate(20.millis)
-      .mapEval(_ =>
-        checkUserInput.flatMap(_.fold(Task.unit)(movement =>
-          Task(println(s"sending $movement")) >> socket.send(movement))))
-      .completedL
+  // TODO 5. Sending Movements in a loop
+  // Sometimes it's much more convenient to use Streaming-based abstraction,
+  // rather than Task.
+  // Use `Observable` to write a function that will check userInputs every 20 milliseconds
+  // and send it through the socket.
+  // `checkUserInput` will give you movement to send and you can use `socket.send(movement)` to send it.
+  private def sendMovementLoop(): Task[Unit] = ???
 
   private val keysDown: mutable.HashSet[Movement] =
     mutable.HashSet[Movement]()

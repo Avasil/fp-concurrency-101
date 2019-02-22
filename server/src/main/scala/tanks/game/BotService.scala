@@ -10,8 +10,9 @@ import scala.util.Random
 
 final class BotService(playersInputs: ConcurrentQueue[Task, MovementCommand], currentState: CurrentState) {
 
-  def runBotsLoop(ids: List[Int]): Task[Unit] =
-    Task.wanderUnordered(ids)(runBot(_).delayExecution(500.millis).loopForever).void
+  // TODO: 9. Bots
+  // Run `runBot` function in loop for each element with delay, e.g. 500 millis so they arent too fast
+  def runBotsLoop(ids: List[Int]): Task[Unit] = ???
 
   def runBot(id: Int): Task[Unit] =
     for {

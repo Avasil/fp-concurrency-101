@@ -1,7 +1,6 @@
 package tanks.game
 
 import cats.implicits._
-import monix.catnap.Semaphore
 import monix.eval.Task
 import monix.reactive.Observable
 import shared.models.GameObject.Water
@@ -10,9 +9,9 @@ import tanks.canvas.CanvasImage
 
 object GameLoop {
 
+  // If you've completed all "1" todos you should be able to run the game
   def gameLoop(canvas: CanvasImage, obs: Observable[GameState]): Task[Unit] = {
     for {
-      sem <- Semaphore[Task](1L)
       _ <- obs
         .scan(GameState.empty)(GameState.mergeDelta)
         .mapEval { gameState =>
@@ -20,9 +19,17 @@ object GameLoop {
           val animateTask =
             for {
               _ <- canvas.drawEnvironment(static)
-              _ <- sem.withPermit(canvas.animateWater(water).loopForever).start
+              // TODO: 3. Water animation.
+              // We would like to animate water in a loop but we want it to be happening
+              // in the background. The water can't be destroyed so ideally we could start
+              // infinite loop once and make sure there is only one such a task running.
+              // Once you do it, check out the game!
+//              _ <- ??? canvas.animateWater(water) ???
               _ <- canvas.drawMovement(animated)
-              _ <- canvas.drawExplosions(animated).start
+              // TODO: 2. Animations
+              // Check instructions in `CanvasImage`.
+              // Result should be bullet exploding if you run testGame. :)
+//              _ <- canvas.drawExplosions(animated)
             } yield ()
           animateTask
         }

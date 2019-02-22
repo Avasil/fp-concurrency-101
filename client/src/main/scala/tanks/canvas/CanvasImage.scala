@@ -63,27 +63,35 @@ final class CanvasImage(tanksCtx: Ctx2D, bgCtx: Ctx2D, tanksImage: HTMLImageElem
     Task.traverse(assets)(drawMovementSteps).void
   }
 
+  // TODO: 2. Animations
+  // This function draws explosions if the bullets collide with each other or enemy tank.
+  // I've left coordinates already calculated but try drawing them concurrently.
+  // To draw animation use `drawAnimated(Explosion, 5, x, y, 100.millis)`
   def drawExplosions(assets: List[AnimatedObject]): Task[Unit] = {
-    assets
-      .groupBy(_.destination)
-      .filter {
-        case (_, values) =>
-          val diffTeam: Boolean =
-            values.map {
-              case t: Tank   => t.team
-              case b: Bullet => b.team
-            }.toSet.size > 1
+    val explosions: List[(Int, Int)] =
+      assets
+        .groupBy(_.destination)
+        .filter {
+          case (_, values) =>
+            val diffTeam: Boolean =
+              values.map {
+                case t: Tank   => t.team
+                case b: Bullet => b.team
+              }.toSet.size > 1
 
-          values.size > 1 && diffTeam
-      }
-      .keys
-      .toList
-      .parTraverse_ {
-        case (x, y) =>
-          drawAnimated(Explosion, 5, x, y, 100.millis)
-      }
+            values.size > 1 && diffTeam
+        }
+        .keys
+        .toList
+
+    ???
   }
 
+  // TODO: 2. Animations
+  // Well, it's not really efficient way to do this on top of JS but try to solve it with `Task`:
+  // - draw all animation frames with specified intervals between invocations
+  // - So: frame1 -> delay -> frame2 -> delay ... -> frameN -> delay
+  // - you can draw like this: Task(draw(resourceLocation, posX, posY, bgCtx, bgImage))
   private def drawAnimated[A: AnimatedAsset](
     asset: A,
     forms: Int,
@@ -91,9 +99,9 @@ final class CanvasImage(tanksCtx: Ctx2D, bgCtx: Ctx2D, tanksImage: HTMLImageElem
     posY: Double,
     interval: FiniteDuration
   ): Task[Unit] = {
-    asset.getAnimatedOffsetX.take(forms).toList.traverse_ { resourceLocation =>
-      Task(draw(resourceLocation, posX, posY, bgCtx, bgImage)) >> Task.sleep(interval)
-    }
+    val frames: List[ResourceLocation] = asset.getAnimatedOffsetX.take(forms).toList
+
+    ???
   }
 
   private def draw(
@@ -120,12 +128,17 @@ object CanvasImage {
 
   type Ctx2D = dom.CanvasRenderingContext2D
 
-  def loadImage(ctx: Ctx2D, src: String): Task[HTMLImageElement] =
-    Task.async { cb =>
-      val image = dom.document.createElement("img").asInstanceOf[HTMLImageElement]
-      image.src = src
-      image.onload = { _ =>
-        cb.onSuccess(image)
-      }
+  // TODO: 1. Creating a Task from Callback
+  // We need to wait until the image is loaded before doing anything with it.
+  // JS API provides just a callback but that's enough. :)
+  // Look around in Task API for functions such as `Task.create`, `Task.async`, `Task.cancelable` etc. and choose what
+  // you think is appropriate!
+  def loadImage(ctx: Ctx2D, src: String): Task[HTMLImageElement] = {
+    val image = dom.document.createElement("img").asInstanceOf[HTMLImageElement]
+    image.src = src
+    image.onload = { event =>
+      ???
     }
+    ???
+  }
 }
