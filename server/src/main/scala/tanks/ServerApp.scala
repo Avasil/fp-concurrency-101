@@ -8,7 +8,7 @@ import shared.models._
 import tanks.comm.WebSocket
 import tanks.game.{BotService, CurrentState, GameLoop, GameStatus}
 
-// TODO: 7. Server setup
+// TODO: 6. Server setup
 // - Create playerInputs and gameStateQueue which are `ConcurrentQueue` from `monix.catnap`.
 // - Pass them to WebSocket `new WebSocket(playersInputs, gameStateQueue, gameStatus, logger)(scheduler)`
 // - Pass playerInputs to GameLoop
@@ -22,7 +22,7 @@ object ServerApp extends TaskApp {
     for {
       _ <- logger.log("Hello server")
 
-      // TODO: 9. Bots
+      // TODO: 8. Bots
       // If we want the bots to have any signs of intelligence we should pass the latest state there
       // and allow them to send their own movements.
       // - Create gameStateRef that you can pass there
@@ -34,7 +34,7 @@ object ServerApp extends TaskApp {
 //      botService   = new BotService(playersInputs, currentState)
 //      _ <- botService.runBotsLoop(List.range(1, 11))
 
-      // TODO: 7. Server setup
+      // TODO: 6. Server setup
       // Uncomment once 7. is done
 //      _ <- ws.stream.compile.drain
     } yield ExitCode.Success

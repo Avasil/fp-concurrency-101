@@ -2,7 +2,7 @@ package tanks.game
 
 import monix.eval.Task
 
-// TODO: 10. GameStatus
+// TODO: 9. GameStatus
 // This class should contain information whether the game is running or not.
 // It could be used to restart the game if the client established new connection
 // and run some parts (like bots and the game loop) only when it's active.

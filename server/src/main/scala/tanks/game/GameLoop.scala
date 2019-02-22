@@ -23,7 +23,7 @@ final class GameLoop private (
   initialState: GameState
 ) extends CollisionLogic with TankMovement {
 
-  // TODO: 8. GameLoop
+  // TODO: 7. GameLoop
   // There are many possible implementation but my recommendation is this:
   // - Observable starts with initial state
   // - Then it continuously polls Queue with inputs from players
