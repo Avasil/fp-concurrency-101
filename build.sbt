@@ -1,6 +1,7 @@
+import sbt.Keys.testFrameworks
 import sbtcrossproject.{CrossType, crossProject}
 
-val monixVersion = "3.0.0-RC2"
+val monixVersion = "3.1.0"
 val http4sVersion = "0.20.0-M5"
 val circeVersion = "0.11.1"
 
@@ -29,8 +30,10 @@ lazy val exercises = (project in file("exercises"))
   .settings(
     name := "exercises",
     libraryDependencies ++= Seq(
-      "io.monix" %% "monix" % monixVersion
-    )
+      "io.monix" %% "monix" % monixVersion,
+      "io.monix" %%% "minitest" % "2.7.0" % Test
+    ),
+    testFrameworks := Seq(new TestFramework("minitest.runner.Framework"))
   )
 
 lazy val sharedJS = shared.js
